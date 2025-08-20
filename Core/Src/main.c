@@ -18,7 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "app_lorawan.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -63,8 +65,9 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
 
+  /* USER CODE BEGIN 1 */
+	//#define LORAWAN_DEVICE_EUI                                 00,80,E1,15,04,30,8B,FC
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -86,6 +89,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_LoRaWAN_Init();
+  MX_USART2_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -98,6 +103,11 @@ int main(void)
     MX_LoRaWAN_Process();
 
     /* USER CODE BEGIN 3 */
+	  //HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	  //HAL_Delay(500);
+	  //HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+	  //HAL_Delay(500);
+
   }
   /* USER CODE END 3 */
 }

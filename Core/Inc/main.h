@@ -57,30 +57,46 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define RTC_PREDIV_A ((1<<(15-RTC_N_PREDIV_S))-1)
 #define RTC_N_PREDIV_S 10
 #define RTC_PREDIV_S ((1<<RTC_N_PREDIV_S)-1)
-#define RTC_PREDIV_A ((1<<(15-RTC_N_PREDIV_S))-1)
-#define DBG3_Pin GPIO_PIN_3
-#define DBG3_GPIO_Port GPIOB
-#define DBG4_Pin GPIO_PIN_4
-#define DBG4_GPIO_Port GPIOB
-#define USARTx_RX_Pin GPIO_PIN_7
-#define USARTx_RX_GPIO_Port GPIOB
-#define LED2_Pin GPIO_PIN_5
-#define LED2_GPIO_Port GPIOB
-#define DBG1_Pin GPIO_PIN_0
-#define DBG1_GPIO_Port GPIOA
-#define BUT1_Pin GPIO_PIN_13
-#define BUT1_GPIO_Port GPIOB
-#define BUT1_EXTI_IRQn EXTI15_10_IRQn
-#define USARTx_TX_Pin GPIO_PIN_6
-#define USARTx_TX_GPIO_Port GPIOB
-#define DBG2_Pin GPIO_PIN_10
-#define DBG2_GPIO_Port GPIOB
+#define LED2_Pin GPIO_PIN_15
+#define LED2_GPIO_Port GPIOA
+#define LED1_Pin GPIO_PIN_15
+#define LED1_GPIO_Port GPIOB
+#define ADC_OUT_CUR_Pin GPIO_PIN_3
+#define ADC_OUT_CUR_GPIO_Port GPIOB
+#define ADC_IN_VOLT_Pin GPIO_PIN_4
+#define ADC_IN_VOLT_GPIO_Port GPIOB
+#define HDC_SDA_Pin GPIO_PIN_7
+#define HDC_SDA_GPIO_Port GPIOB
+#define ADC_OUT_VOLT_Pin GPIO_PIN_14
+#define ADC_OUT_VOLT_GPIO_Port GPIOB
+#define RS485_RX_Pin GPIO_PIN_10
+#define RS485_RX_GPIO_Port GPIOA
+#define VCC_OUT_EN_Pin GPIO_PIN_0
+#define VCC_OUT_EN_GPIO_Port GPIOA
+#define ADC_TEMP_Pin GPIO_PIN_13
+#define ADC_TEMP_GPIO_Port GPIOB
+#define RS485_TX_Pin GPIO_PIN_6
+#define RS485_TX_GPIO_Port GPIOB
+#define HDC_SCL_Pin GPIO_PIN_9
+#define HDC_SCL_GPIO_Port GPIOA
+#define RS485_RE_Pin GPIO_PIN_1
+#define RS485_RE_GPIO_Port GPIOC
+#define RS485_DE_Pin GPIO_PIN_0
+#define RS485_DE_GPIO_Port GPIOC
+#define USARTx_RX_Pin GPIO_PIN_3
+#define USARTx_RX_GPIO_Port GPIOA
+#define USARTx_TX_Pin GPIO_PIN_2
+#define USARTx_TX_GPIO_Port GPIOA
+#define TPS_SEL_Pin GPIO_PIN_10
+#define TPS_SEL_GPIO_Port GPIOB
 #define RF_CTRL1_Pin GPIO_PIN_4
 #define RF_CTRL1_GPIO_Port GPIOA
 #define RF_CTRL2_Pin GPIO_PIN_5
 #define RF_CTRL2_GPIO_Port GPIOA
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

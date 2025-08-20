@@ -25,19 +25,18 @@
 #include "stm32_seq.h"
 #include "stm32_timer.h"
 #include "utilities_def.h"
-#include "lora_app_version.h"
+#include "app_version.h"
 #include "lorawan_version.h"
 #include "subghz_phy_version.h"
 #include "lora_info.h"
 #include "LmHandler.h"
-#include "stm32_lpm.h"
 #include "adc_if.h"
 #include "CayenneLpp.h"
 #include "sys_sensors.h"
 #include "flash_if.h"
 
 /* USER CODE BEGIN Includes */
-
+#define DBG 0
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -86,7 +85,7 @@ typedef enum TxEventType_e
   * @brief LoRaWAN NVM Flash address
   * @note last 2 sector of a 128kBytes device
   */
-#define LORAWAN_NVM_BASE_ADDRESS                    ((uint32_t)0x0803F000UL)
+#define LORAWAN_NVM_BASE_ADDRESS                    ((void *)0x0803F000UL)
 
 /* USER CODE BEGIN PD */
 static const char *slotStrings[] = { "1", "2", "C", "C_MC", "P", "P_MC" };
@@ -134,6 +133,11 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params);
   * @param params status of Last Beacon
   */
 static void OnBeaconStatusChange(LmHandlerBeaconParams_t *params);
+
+/**
+  * @brief callback when system time has been updated
+  */
+static void OnSysTimeUpdate(void);
 
 /**
   * @brief callback when LoRaWAN application Class is changed
@@ -260,6 +264,7 @@ static LmHandlerCallbacks_t LmHandlerCallbacks =
   .OnTxData =                     OnTxData,
   .OnRxData =                     OnRxData,
   .OnBeaconStatusChange =         OnBeaconStatusChange,
+  .OnSysTimeUpdate =              OnSysTimeUpdate,
   .OnClassChange =                OnClassChange,
   .OnTxPeriodicityChanged =       OnTxPeriodicityChanged,
   .OnTxFrameCtrlChanged =         OnTxFrameCtrlChanged,
@@ -277,6 +282,7 @@ static LmHandlerParams_t LmHandlerParams =
   .AdrEnable =                LORAWAN_ADR_STATE,
   .IsTxConfirmed =            LORAWAN_DEFAULT_CONFIRMED_MSG_STATE,
   .TxDatarate =               LORAWAN_DEFAULT_DATA_RATE,
+  .TxPower =                  LORAWAN_DEFAULT_TX_POWER,
   .PingSlotPeriodicity =      LORAWAN_DEFAULT_PING_SLOT_PERIODICITY,
   .RxBCTimeout =              LORAWAN_DEFAULT_CLASS_B_C_RESP_TIMEOUT
 };
@@ -431,7 +437,7 @@ void LoRaWAN_Init(void)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  switch (GPIO_Pin)
+  /*switch (GPIO_Pin)
   {
     case  BUT1_Pin:
     	// XXX: always initialized
@@ -443,6 +449,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     default:
       break;
   }
+  */
 }
 
 /* USER CODE END PB_Callbacks */
@@ -459,7 +466,7 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 
   if (params != NULL)
   {
-#if 0   // XXX:
+#if defined(DBG)   // XXX:
     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET); /* LED_BLUE */
 #endif
 
@@ -541,9 +548,6 @@ static void SendTxData(void)
   sensor_t sensor_data;
   UTIL_TIMER_Time_t nextTxIn = 0;
 
-#ifdef CAYENNE_LPP
-  uint8_t channel = 0;
-#else
   uint16_t pressure = 0;
   int16_t temperature = 0;
   uint16_t humidity = 0;
@@ -551,31 +555,19 @@ static void SendTxData(void)
   int32_t latitude = 0;
   int32_t longitude = 0;
   uint16_t altitudeGps = 0;
-#endif /* CAYENNE_LPP */
 
   EnvSensors_Read(&sensor_data);
 
   APP_LOG(TS_ON, VLEVEL_M, "VDDA: %d\r\n", batteryLevel);
   APP_LOG(TS_ON, VLEVEL_M, "temp: %d\r\n", (int16_t)(sensor_data.temperature));
+  APP_LOG(TS_ON, VLEVEL_M, "ADC0 - Temp : %d\r\n", (int16_t)(SYS_GetADC0()));
+  APP_LOG(TS_ON, VLEVEL_M, "ADC1 - Out V: %d\r\n", (int16_t)(SYS_GetADC1()));
+  APP_LOG(TS_ON, VLEVEL_M, "ADC2 - Out A: %d\r\n", (int16_t)(SYS_GetADC2()));
+  APP_LOG(TS_ON, VLEVEL_M, "ADC3 - In V : %d\r\n", (int16_t)(SYS_GetADC3()));
 
   AppData.Port = LORAWAN_USER_APP_PORT;
 
-#ifdef CAYENNE_LPP
-  CayenneLppReset();
-  CayenneLppAddBarometricPressure(channel++, sensor_data.pressure);
-  CayenneLppAddTemperature(channel++, sensor_data.temperature);
-  CayenneLppAddRelativeHumidity(channel++, (uint16_t)(sensor_data.humidity));
 
-  if ((LmHandlerParams.ActiveRegion != LORAMAC_REGION_US915) && (LmHandlerParams.ActiveRegion != LORAMAC_REGION_AU915)
-      && (LmHandlerParams.ActiveRegion != LORAMAC_REGION_AS923))
-  {
-    CayenneLppAddDigitalInput(channel++, GetBatteryLevel());
-    CayenneLppAddDigitalOutput(channel++, AppLedStateOn);
-  }
-
-  CayenneLppCopy(AppData.Buffer);
-  AppData.BufferSize = CayenneLppGetSize();
-#else  /* not CAYENNE_LPP */
   humidity    = (uint16_t)(sensor_data.humidity * 10);            /* in %*10     */
   temperature = (int16_t)(sensor_data.temperature);
   pressure = (uint16_t)(sensor_data.pressure * 100 / 10); /* in hPa / 10 */
@@ -612,13 +604,12 @@ static void SendTxData(void)
   }
 
   AppData.BufferSize = i;
-#endif /* CAYENNE_LPP */
 
   if ((JoinLedTimer.IsRunning) && (LmHandlerJoinStatus() == LORAMAC_HANDLER_SET))
   {
     UTIL_TIMER_Stop(&JoinLedTimer);
-#if 0   // XXX:
-    HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_RED */
+#if defined(DBG)   // XXX:
+    //HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_RED */
 #endif
   }
 
@@ -663,22 +654,22 @@ static void OnTxTimerEvent(void *context)
 /* USER CODE BEGIN PrFD_LedEvents */
 static void OnTxTimerLedEvent(void *context)
 {
-#if 0	// XXX: No LED available
+#if defined(DBG)	// XXX: No LED available
   HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET); /* LED_GREEN */
 #endif
 }
 
 static void OnRxTimerLedEvent(void *context)
 {
-#if 0   // XXX: No LED available
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET); /* LED_BLUE */
+#if defined(DBG)   // XXX: No LED available
+  //HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_BLUE */
 #endif
 }
 
 static void OnJoinTimerLedEvent(void *context)
 {
-#if 0   // XXX: No LED available
-  HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin); /* LED_RED */
+#if defined(DBG)   // XXX: No LED available
+  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin); /* LED_RED */
 #endif
 }
 
@@ -692,7 +683,7 @@ static void OnTxData(LmHandlerTxParams_t *params)
     /* Process Tx event only if its a mcps response to prevent some internal events (mlme) */
     if (params->IsMcpsConfirm != 0)
     {
-#if 0	// XXX: No LED available
+#if defined(DBG)	// XXX: No LED available
       HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET); /* LED_GREEN */
 #endif
       UTIL_TIMER_Start(&TxLedTimer);
@@ -725,8 +716,8 @@ static void OnJoinRequest(LmHandlerJoinParams_t *joinParams)
       UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_LoRaStoreContextEvent), CFG_SEQ_Prio_0);
 
       UTIL_TIMER_Stop(&JoinLedTimer);
-#if 0   // XXX:
-      HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_RED */
+#if defined(DBG)   // XXX:
+      //HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_RED */
 #endif
 
       APP_LOG(TS_OFF, VLEVEL_M, "\r\n###### = JOINED = ");
@@ -786,6 +777,13 @@ static void OnBeaconStatusChange(LmHandlerBeaconParams_t *params)
     }
   }
   /* USER CODE END OnBeaconStatusChange_1 */
+}
+
+static void OnSysTimeUpdate(void)
+{
+  /* USER CODE BEGIN OnSysTimeUpdate_1 */
+
+  /* USER CODE END OnSysTimeUpdate_1 */
 }
 
 static void OnClassChange(DeviceClass_t deviceClass)
@@ -868,9 +866,9 @@ static void OnSystemReset(void)
 static void StopJoin(void)
 {
   /* USER CODE BEGIN StopJoin_1 */
-#if 0   // XXX: No LED available
+#if defined(DBG)   // XXX: No LED available
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET); /* LED_BLUE */
-  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET); /* LED_RED */
+  //HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET); /* LED_RED */
   HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET); /* LED_GREEN */
 #endif
 
@@ -915,9 +913,9 @@ static void OnStopJoinTimerEvent(void *context)
     UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_LoRaStopJoinEvent), CFG_SEQ_Prio_0);
   }
   /* USER CODE BEGIN OnStopJoinTimerEvent_Last */
-#if 0   // XXX: No LED available
+#if defined(DBG)   // XXX: No LED available
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET); /* LED_BLUE */
-  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_RED */
+  //HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_RED */
   HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET); /* LED_GREEN */
 #endif
   /* USER CODE END OnStopJoinTimerEvent_Last */
@@ -969,13 +967,9 @@ static void OnStoreContextRequest(void *nvm, uint32_t nvm_size)
 
   /* USER CODE END OnStoreContextRequest_1 */
   /* store nvm in flash */
-  if (HAL_FLASH_Unlock() == HAL_OK)
+  if (FLASH_IF_Erase(LORAWAN_NVM_BASE_ADDRESS, FLASH_PAGE_SIZE) == FLASH_IF_OK)
   {
-    if (FLASH_IF_EraseByPages(PAGE(LORAWAN_NVM_BASE_ADDRESS), 1, 0U) == FLASH_OK)
-    {
-      FLASH_IF_Write(LORAWAN_NVM_BASE_ADDRESS, (uint8_t *)nvm, nvm_size, NULL);
-    }
-    HAL_FLASH_Lock();
+    FLASH_IF_Write(LORAWAN_NVM_BASE_ADDRESS, (const void *)nvm, nvm_size);
   }
   /* USER CODE BEGIN OnStoreContextRequest_Last */
 
@@ -987,7 +981,7 @@ static void OnRestoreContextRequest(void *nvm, uint32_t nvm_size)
   /* USER CODE BEGIN OnRestoreContextRequest_1 */
 
   /* USER CODE END OnRestoreContextRequest_1 */
-  UTIL_MEM_cpy_8(nvm, (void *)LORAWAN_NVM_BASE_ADDRESS, nvm_size);
+  FLASH_IF_Read(nvm, LORAWAN_NVM_BASE_ADDRESS, nvm_size);
   /* USER CODE BEGIN OnRestoreContextRequest_Last */
 
   /* USER CODE END OnRestoreContextRequest_Last */
