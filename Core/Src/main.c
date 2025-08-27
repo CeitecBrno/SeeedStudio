@@ -92,7 +92,8 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_GPIO_WritePin(RS485_RE_GPIO_Port, RS485_RE_Pin, 1);
+  HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, 0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -103,6 +104,8 @@ int main(void)
     MX_LoRaWAN_Process();
 
     /* USER CODE BEGIN 3 */
+	  //UTIL_LPM_EnterLowPower();
+	  //HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
 	  //HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 	  //HAL_Delay(500);
 	  //HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);

@@ -36,7 +36,7 @@
 #include "flash_if.h"
 
 /* USER CODE BEGIN Includes */
-#define DBG 0
+//#define DBG 0
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -514,12 +514,16 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
                 if (AppLedStateOn == RESET)
                 {
                   APP_LOG(TS_OFF, VLEVEL_H, "LED OFF\r\n");
-                  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET); /* LED_RED */
+				  #if defined(DBG)   // XXX:
+                  	  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET); /* LED_RED */
+					#endif
                 }
                 else
                 {
                   APP_LOG(TS_OFF, VLEVEL_H, "LED ON\r\n");
-                  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET); /* LED_RED */
+					#if defined(DBG)   // XXX:
+                  	  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET); /* LED_RED */
+					#endif
                 }
               }
               break;

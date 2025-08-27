@@ -21,5 +21,5 @@
 ../Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionCommon.c:749:8:RegionCommonGetNextLowerTxDr	40	static
 ../Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionCommon.c:769:8:RegionCommonLimitTxPower	16	static
 ../Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionCommon.c:775:10:RegionCommonGetBandwidth	16	static
-../Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionCommon.c:789:6:RegionCommonRxConfigPrint	32	static
-../Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionCommon.c:801:6:RegionCommonTxConfigPrint	24	static
+../Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionCommon.c:789:6:RegionCommonRxConfigPrint	16	static
+../Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionCommon.c:801:6:RegionCommonTxConfigPrint	16	static
