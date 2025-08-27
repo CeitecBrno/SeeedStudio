@@ -136,7 +136,6 @@ int16_t SYS_GetTemperatureLevel(void)
   /* USER CODE END SYS_GetTemperatureLevel_2 */
 }
 
-
 uint16_t SYS_GetBatteryLevel(void)
 {
   /* USER CODE BEGIN SYS_GetBatteryLevel_1 */

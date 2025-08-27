@@ -91,7 +91,10 @@ int16_t SYS_GetTemperatureLevel(void);
 uint16_t SYS_GetBatteryLevel(void);
 
 /* USER CODE BEGIN EFP */
-
+uint16_t SYS_GetADC0(void);
+uint16_t SYS_GetADC1(void);
+uint16_t SYS_GetADC2(void);
+uint16_t SYS_GetADC3(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

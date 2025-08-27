@@ -136,6 +136,7 @@ int16_t SYS_GetTemperatureLevel(void)
   /* USER CODE END SYS_GetTemperatureLevel_2 */
 }
 
+
 uint16_t SYS_GetBatteryLevel(void)
 {
   /* USER CODE BEGIN SYS_GetBatteryLevel_1 */
@@ -175,7 +176,41 @@ uint16_t SYS_GetBatteryLevel(void)
 
 /* Private Functions Definition -----------------------------------------------*/
 /* USER CODE BEGIN PrFD */
+uint16_t SYS_GetADC0(void)
+{
+	uint16_t voltage = 0;
+	uint32_t outvoltage = 0;
+	voltage = ADC_ReadChannels(ADC_CHANNEL_0);
+	outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
+	return outvoltage;
+}
 
+uint16_t SYS_GetADC1(void)
+{
+	uint16_t voltage = 0;
+	uint32_t outvoltage = 0;
+	voltage = ADC_ReadChannels(ADC_CHANNEL_1);
+	outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
+	return outvoltage;
+}
+
+uint16_t SYS_GetADC2(void)
+{
+	uint16_t voltage = 0;
+	uint32_t outvoltage = 0;
+	voltage = ADC_ReadChannels(ADC_CHANNEL_2);
+	outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
+	return outvoltage;
+}
+
+uint16_t SYS_GetADC3(void)
+{
+	uint16_t voltage = 0;
+	uint32_t outvoltage = 0;
+	voltage = ADC_ReadChannels(ADC_CHANNEL_3);
+	outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
+	return outvoltage;
+}
 /* USER CODE END PrFD */
 
 static uint32_t ADC_ReadChannels(uint32_t channel)

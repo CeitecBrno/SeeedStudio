@@ -86,10 +86,6 @@ void Error_Handler(void);
 #define RS485_RE_GPIO_Port GPIOC
 #define RS485_DE_Pin GPIO_PIN_0
 #define RS485_DE_GPIO_Port GPIOC
-#define USARTx_RX_Pin GPIO_PIN_3
-#define USARTx_RX_GPIO_Port GPIOA
-#define USARTx_TX_Pin GPIO_PIN_2
-#define USARTx_TX_GPIO_Port GPIOA
 #define TPS_SEL_Pin GPIO_PIN_10
 #define TPS_SEL_GPIO_Port GPIOB
 #define RF_CTRL1_Pin GPIO_PIN_4
