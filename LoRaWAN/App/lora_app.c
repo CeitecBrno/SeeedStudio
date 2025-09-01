@@ -234,6 +234,7 @@ static void OnRxTimerLedEvent(void *context);
   */
 static void OnJoinTimerLedEvent(void *context);
 
+
 /* USER CODE END PFP */
 
 /* Private variables ---------------------------------------------------------*/
@@ -342,6 +343,7 @@ static UTIL_TIMER_Object_t JoinLedTimer;
 
 /* Exported functions ---------------------------------------------------------*/
 /* USER CODE BEGIN EF */
+
 
 /* USER CODE END EF */
 
@@ -559,6 +561,8 @@ static void SendTxData(void)
   int32_t latitude = 0;
   int32_t longitude = 0;
   uint16_t altitudeGps = 0;
+  uint8_t t_sht=0, rh_sht=0;
+  uint16_t data_sht=0;
 
   EnvSensors_Read(&sensor_data);
 
@@ -568,6 +572,12 @@ static void SendTxData(void)
   APP_LOG(TS_ON, VLEVEL_M, "ADC1 - Out V: %d\r\n", (int16_t)(SYS_GetADC1()));
   APP_LOG(TS_ON, VLEVEL_M, "ADC2 - Out A: %d\r\n", (int16_t)(SYS_GetADC2()));
   APP_LOG(TS_ON, VLEVEL_M, "ADC3 - In V : %d\r\n", (int16_t)(SYS_GetADC3()));
+
+  data_sht = sht40();
+  t_sht = (data_sht >> 8);
+  rh_sht = ((data_sht) & 0xFF);
+  APP_LOG(TS_ON, VLEVEL_M, "TempSHT - In C : %d\r\n", (uint8_t)(t_sht));
+  APP_LOG(TS_ON, VLEVEL_M, "RH SHT  - In % : %d\r\n", (uint8_t)(rh_sht));
 
   AppData.Port = LORAWAN_USER_APP_PORT;
 
@@ -597,6 +607,7 @@ static void SendTxData(void)
     longitude = sensor_data.longitude;
 
     AppData.Buffer[i++] = GetBatteryLevel();        /* 1 (very low) to 254 (fully charged) */
+    //AppData.Buffer[i++] = sht40();        /* 1 (very low) to 254 (fully charged) */
     AppData.Buffer[i++] = (uint8_t)((latitude >> 16) & 0xFF);
     AppData.Buffer[i++] = (uint8_t)((latitude >> 8) & 0xFF);
     AppData.Buffer[i++] = (uint8_t)(latitude & 0xFF);

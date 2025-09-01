@@ -92,8 +92,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(RS485_RE_GPIO_Port, RS485_RE_Pin, 1);
-  HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, 0);
+  //HAL_GPIO_WritePin(RS485_RE_GPIO_Port, RS485_RE_Pin, 1);
+  //HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, 0);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
