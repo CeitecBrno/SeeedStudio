@@ -36,7 +36,8 @@
 #include "flash_if.h"
 
 /* USER CODE BEGIN Includes */
-//#define DBG 0
+#define DBG 0
+#include "math.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -343,7 +344,29 @@ static UTIL_TIMER_Object_t JoinLedTimer;
 
 /* Exported functions ---------------------------------------------------------*/
 /* USER CODE BEGIN EF */
+static void SetRx2Sf9EU868(void)
+{
+    MibRequestConfirm_t mib;
 
+    // 1) Nastav DEFAULT (co se použije při resetech/joinech)
+    mib.Type = MIB_RX2_DEFAULT_CHANNEL;
+    mib.Param.Rx2DefaultChannel.Frequency = 869525000; // Hz
+    mib.Param.Rx2DefaultChannel.Datarate  = DR_3;      // SF9/BW125 v EU868
+    LoRaMacMibSetRequestConfirm(&mib);
+
+    // 2) Nastav CURRENT (co platí hned teď)
+    mib.Type = MIB_RX2_CHANNEL;
+    mib.Param.Rx2Channel.Frequency = 869525000; // Hz
+    mib.Param.Rx2Channel.Datarate  = DR_3;      // SF9/BW125
+    LoRaMacMibSetRequestConfirm(&mib);
+
+    // Volitelné: čti zpět a logni
+    mib.Type = MIB_RX2_CHANNEL;
+    LoRaMacMibGetRequestConfirm(&mib);
+    APP_LOG(TS_OFF, VLEVEL_M, "RX2 NOW: %lu Hz, DR %d\r\n",
+            mib.Param.Rx2Channel.Frequency,
+            mib.Param.Rx2Channel.Datarate);
+}
 
 /* USER CODE END EF */
 
@@ -409,12 +432,14 @@ void LoRaWAN_Init(void)
   LmHandlerInit(&LmHandlerCallbacks, APP_VERSION);
 
   LmHandlerConfigure(&LmHandlerParams);
+  /* === RX2: EU868 → 869.525 MHz, DR9 (SF9BW125) === */
+  //SetRx2Sf9EU868();
 
   /* USER CODE BEGIN LoRaWAN_Init_2 */
   UTIL_TIMER_Start(&JoinLedTimer);
 
   /* USER CODE END LoRaWAN_Init_2 */
-
+  SetRx2Sf9EU868();
   LmHandlerJoin(ActivationType, ForceRejoin);
 
   if (EventType == TX_ON_TIMER)
@@ -561,26 +586,52 @@ static void SendTxData(void)
   int32_t latitude = 0;
   int32_t longitude = 0;
   uint16_t altitudeGps = 0;
-  uint8_t t_sht=0, rh_sht=0;
-  uint16_t data_sht=0;
+  uint16_t t_sht=0, rh_sht=0;
+  uint32_t data_sht=0;
+  float Rntc = 0;
 
   EnvSensors_Read(&sensor_data);
+  uint16_t adc_0 = 0, adc_1 = 0, adc_2 = 0, adc_3 = 0;
+  float volt_0 = 0, volt_1 = 0, volt_2 = 0, volt_3 = 0;
+  float a = 0, b = 0,c = 0;
+  adc_0 = SYS_GetADC0();
+  adc_1 = SYS_GetADC1();
+  adc_2 = SYS_GetADC2();
+  adc_3 = SYS_GetADC3();
+  if(adc_0 > 0 || adc_0 < 4096) {
+	  a = ((3,3 * (float) adc_0) / 4095);
+	  b = ((a * 7500000) / (3,3 - a));
+	  c = log10(b / 470000);
+	  //Rntc = ((7500000.0 * (float)adc_0) / (4095.0 - (float)adc_0));
+	  //volt_0 = (1 / (1/298,15 + ((1/4500) * (log(Rntc/470000))))) - 273,15;
+	  volt_0 = ( 1 / ((1/298,15) + (1/4500 * c))) + 273,15;
+	  //invT = (1.0f / T0) + (1.0f / B_K) * logf(Rntc / R25_ohm);
+	  //volt_0 = ((((3,3 * adc_0/4095) * (7500000/2700000)) + (3,3 * adc_0/4095)))
+  }
+  else
+	  volt_0 = 0;
 
+  volt_1 = ((((5 * (float)adc_1/4095)   * (7500000/2700000)) + (5 * (float)adc_1/4095)));
+  volt_2 = ((3,3 * (float)adc_2 ) / 4095);
+  volt_3 = ((((3,3 * (float)adc_3/4095) * (7500000/2700000)) + (3,3 * (float)adc_3/4095)));
   APP_LOG(TS_ON, VLEVEL_M, "VDDA: %d\r\n", batteryLevel);
   APP_LOG(TS_ON, VLEVEL_M, "temp: %d\r\n", (int16_t)(sensor_data.temperature));
-  APP_LOG(TS_ON, VLEVEL_M, "ADC0 - Temp : %d\r\n", (int16_t)(SYS_GetADC0()));
-  APP_LOG(TS_ON, VLEVEL_M, "ADC1 - Out V: %d\r\n", (int16_t)(SYS_GetADC1()));
-  APP_LOG(TS_ON, VLEVEL_M, "ADC2 - Out A: %d\r\n", (int16_t)(SYS_GetADC2()));
-  APP_LOG(TS_ON, VLEVEL_M, "ADC3 - In V : %d\r\n", (int16_t)(SYS_GetADC3()));
+  APP_LOG(TS_ON, VLEVEL_M, "ADC0 - Temp : %.3f C\r\n", volt_0);
+  APP_LOG(TS_ON, VLEVEL_M, "ADC1 - Out V: %.3f V\r\n", volt_1/10);
+  APP_LOG(TS_ON, VLEVEL_M, "ADC2 - Out A: %.3f A\r\n", volt_2);
+  APP_LOG(TS_ON, VLEVEL_M, "ADC3 - In V : %.3f V\r\n", volt_3);
+
+
 
   data_sht = sht40();
-  t_sht = (data_sht >> 8);
-  rh_sht = ((data_sht) & 0xFF);
-  APP_LOG(TS_ON, VLEVEL_M, "TempSHT - In C : %d\r\n", (uint8_t)(t_sht));
-  APP_LOG(TS_ON, VLEVEL_M, "RH SHT  - In % : %d\r\n", (uint8_t)(rh_sht));
+  t_sht = (data_sht >> 16);
+  rh_sht = (data_sht & 0xFFFF);
+  //float s = ((float) t_sht / 100);
+  //float d = ((float) rh_sht / 100);
+  APP_LOG(TS_ON, VLEVEL_M, "TempSHT - In C : %d.%d\r\n", t_sht/100, t_sht%100);
+  APP_LOG(TS_ON, VLEVEL_M, "RH SHT  - In % : %d.%d\r\n", rh_sht/100, rh_sht%100);
 
   AppData.Port = LORAWAN_USER_APP_PORT;
-
 
   humidity    = (uint16_t)(sensor_data.humidity * 10);            /* in %*10     */
   temperature = (int16_t)(sensor_data.temperature);

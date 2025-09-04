@@ -69,7 +69,7 @@ extern "C" {
 #endif /* APP_LOG_ENABLED */
 
 /* USER CODE BEGIN EM */
-uint16_t sht40(void);
+uint32_t sht40(void);
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

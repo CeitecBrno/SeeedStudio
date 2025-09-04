@@ -180,8 +180,9 @@ uint16_t SYS_GetADC0(void)
 	uint16_t voltage = 0;
 	uint32_t outvoltage = 0;
 	voltage = ADC_ReadChannels(ADC_CHANNEL_0);
-	outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
-	return outvoltage;
+	return voltage;
+	//outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
+	//return outvoltage;
 }
 
 uint16_t SYS_GetADC1(void)
@@ -189,8 +190,9 @@ uint16_t SYS_GetADC1(void)
 	uint16_t voltage = 0;
 	uint32_t outvoltage = 0;
 	voltage = ADC_ReadChannels(ADC_CHANNEL_1);
-	outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
-	return outvoltage;
+	return voltage;
+	//outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
+	//return outvoltage;
 }
 
 uint16_t SYS_GetADC2(void)
@@ -198,8 +200,9 @@ uint16_t SYS_GetADC2(void)
 	uint16_t voltage = 0;
 	uint32_t outvoltage = 0;
 	voltage = ADC_ReadChannels(ADC_CHANNEL_2);
-	outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
-	return outvoltage;
+	return voltage;
+	//outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
+	//return outvoltage;
 }
 
 uint16_t SYS_GetADC3(void)
@@ -207,8 +210,9 @@ uint16_t SYS_GetADC3(void)
 	uint16_t voltage = 0;
 	uint32_t outvoltage = 0;
 	voltage = ADC_ReadChannels(ADC_CHANNEL_3);
-	outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
-	return outvoltage;
+	return voltage;
+	//outvoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, voltage, ADC_RESOLUTION_12B);
+	//return outvoltage;
 }
 /* USER CODE END PrFD */
 
