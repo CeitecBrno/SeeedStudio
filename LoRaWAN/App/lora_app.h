@@ -116,7 +116,7 @@ extern "C" {
  * \remark periodicity is equal to 2^LORAWAN_DEFAULT_PING_SLOT_PERIODICITY seconds
  *         example: 2^4 = 16 seconds. The end-device will open an Rx slot every 16 seconds.
  */
-#define LORAWAN_DEFAULT_PING_SLOT_PERIODICITY       4
+#define LORAWAN_DEFAULT_PING_SLOT_PERIODICITY       6
 
 /*!
  * Default response timeout for class b and class c confirmed

@@ -99,22 +99,23 @@ static void tiny_snprintf_like(char *buf, uint32_t maxsize, const char *strForma
 #define SHT40_CMD_HEATER_1S_20MW	0x1E
 #define SHT40_CMD_HEATER_01S_20MW	0x15
 
-uint16_t sht40(void)
+uint32_t sht40(void)
 {
 	uint8_t tx_data[10]={0};
 	uint8_t rx_data[10]={0};
-	uint32_t t_ticks=0, checksum_t=0, rh_ticks=0, checksum_rh=0, t_degC=0, rh_pRH=0;
+	float t_ticks=0, checksum_t=0, rh_ticks=0, checksum_rh=0;
+	uint32_t t_degC=0, rh_pRH=0;
 	tx_data[0] = SHT40_CMD_HPR;
 	HAL_I2C_Master_Transmit(&hi2c1, SHT40_ADR, tx_data, 1, 10);
 	HAL_Delay(10);
 	HAL_I2C_Master_Receive(&hi2c1, (SHT40_ADR | 0x01), rx_data, 6, 10);
-	t_ticks = rx_data[0] * 256 + rx_data[1];
-	checksum_t = rx_data[2];
-	rh_ticks = rx_data[3] * 256 + rx_data[4];
-	checksum_rh = rx_data[5];
-	t_degC = -45 + 175 * t_ticks/65535;
-	rh_pRH = -6 + 125 * rh_ticks/65535;
-	return (uint16_t)((t_degC << 8) | rh_pRH);
+	t_ticks = (float) rx_data[0] * 256 + (float) rx_data[1];
+	checksum_t = (float) rx_data[2];
+	rh_ticks = (float) rx_data[3] * 256 + rx_data[4];
+	checksum_rh = (float) rx_data[5];
+	t_degC = (-45 + 175 * t_ticks/65535) * 100;
+	rh_pRH = (-6 + 125 * rh_ticks/65535) * 100;
+	return (uint32_t)((t_degC << 16) | (rh_pRH & 0xFFFF));
 	/*
 	if (rh_pRH > 100)
 		rh_pRH = 100;

@@ -368,6 +368,53 @@ static void SetRx2Sf9EU868(void)
             mib.Param.Rx2Channel.Datarate);
 }
 
+
+static void PreJoinEU868(void)
+{
+    MibRequestConfirm_t m;
+
+    // Jen join kanály 868.1 / 868.3 / 868.5
+    m.Type = MIB_CHANNELS_MASK;
+    uint16_t mask[6] = { 0x0007, 0,0,0,0,0 };
+    m.Param.ChannelsMask = mask;
+    LoRaMacMibSetRequestConfirm(&m);
+
+    // Max. TX výkon v rámci regionu
+    m.Type = MIB_CHANNELS_TX_POWER;
+    m.Param.ChannelsTxPower = TX_POWER_0;
+    LoRaMacMibSetRequestConfirm(&m);
+
+    // JOIN datarate → SF12 (lepší dosah)
+    m.Type = MIB_CHANNELS_DEFAULT_DATARATE;
+    m.Param.ChannelsDefaultDatarate = DR_0;
+    LoRaMacMibSetRequestConfirm(&m);
+
+    m.Type = MIB_CHANNELS_DATARATE;
+    m.Param.ChannelsDatarate = DR_0;
+    LoRaMacMibSetRequestConfirm(&m);
+
+    // RX2 (TTN EU868) → 869.525 MHz, SF9
+    m.Type = MIB_RX2_DEFAULT_CHANNEL;   // v tvojí verzi
+    m.Param.Rx2DefaultChannel.Frequency = 869525000;
+    m.Param.Rx2DefaultChannel.Datarate  = DR_3;
+    LoRaMacMibSetRequestConfirm(&m);
+
+    m.Type = MIB_RX2_CHANNEL;
+    m.Param.Rx2Channel.Frequency = 869525000;
+    m.Param.Rx2Channel.Datarate  = DR_3;
+    LoRaMacMibSetRequestConfirm(&m);
+}
+
+static void sht40Data( void )
+{
+	__NOP();
+}
+
+static void rs485Data( void )
+{
+	__NOP();
+}
+
 /* USER CODE END EF */
 
 void LoRaWAN_Init(void)
@@ -415,12 +462,13 @@ void LoRaWAN_Init(void)
   UTIL_TIMER_Create(&RxLedTimer, LED_PERIOD_TIME, UTIL_TIMER_ONESHOT, OnRxTimerLedEvent, NULL);
   UTIL_TIMER_Create(&JoinLedTimer, LED_PERIOD_TIME, UTIL_TIMER_PERIODIC, OnJoinTimerLedEvent, NULL);
 
+  UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_RS485), UTIL_SEQ_RFU, rs485Data);
+  UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_SHT40), UTIL_SEQ_RFU, sht40Data);
+
   /* USER CODE END LoRaWAN_Init_1 */
 
   UTIL_TIMER_Create(&StopJoinTimer, JOIN_TIME, UTIL_TIMER_ONESHOT, OnStopJoinTimerEvent, NULL);
-
   UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LmHandlerProcess), UTIL_SEQ_RFU, LmHandlerProcess);
-
   UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LoRaSendOnTxTimerOrButtonEvent), UTIL_SEQ_RFU, SendTxData);
   UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LoRaStoreContextEvent), UTIL_SEQ_RFU, StoreContext);
   UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LoRaStopJoinEvent), UTIL_SEQ_RFU, StopJoin);
@@ -432,14 +480,12 @@ void LoRaWAN_Init(void)
   LmHandlerInit(&LmHandlerCallbacks, APP_VERSION);
 
   LmHandlerConfigure(&LmHandlerParams);
-  /* === RX2: EU868 → 869.525 MHz, DR9 (SF9BW125) === */
-  //SetRx2Sf9EU868();
 
   /* USER CODE BEGIN LoRaWAN_Init_2 */
   UTIL_TIMER_Start(&JoinLedTimer);
 
   /* USER CODE END LoRaWAN_Init_2 */
-  SetRx2Sf9EU868();
+
   LmHandlerJoin(ActivationType, ForceRejoin);
 
   if (EventType == TX_ON_TIMER)
@@ -604,7 +650,7 @@ static void SendTxData(void)
 	  c = log10(b / 470000);
 	  //Rntc = ((7500000.0 * (float)adc_0) / (4095.0 - (float)adc_0));
 	  //volt_0 = (1 / (1/298,15 + ((1/4500) * (log(Rntc/470000))))) - 273,15;
-	  volt_0 = ( 1 / ((1/298,15) + (1/4500 * c))) + 273,15;
+	  volt_0 = ( 1 / ((1/298,15) + (1/4500 * c))) + 25;
 	  //invT = (1.0f / T0) + (1.0f / B_K) * logf(Rntc / R25_ohm);
 	  //volt_0 = ((((3,3 * adc_0/4095) * (7500000/2700000)) + (3,3 * adc_0/4095)))
   }
@@ -628,8 +674,8 @@ static void SendTxData(void)
   rh_sht = (data_sht & 0xFFFF);
   //float s = ((float) t_sht / 100);
   //float d = ((float) rh_sht / 100);
-  APP_LOG(TS_ON, VLEVEL_M, "TempSHT - In C : %d.%d\r\n", t_sht/100, t_sht%100);
-  APP_LOG(TS_ON, VLEVEL_M, "RH SHT  - In % : %d.%d\r\n", rh_sht/100, rh_sht%100);
+  APP_LOG(TS_ON, VLEVEL_M, "TempSHT - In C : %d.%d C\r\n", t_sht/100, t_sht%100);
+  APP_LOG(TS_ON, VLEVEL_M, "RH SHT  - In % : %d.%d %\r\n", rh_sht/100, rh_sht%100);
 
   AppData.Port = LORAWAN_USER_APP_PORT;
 
