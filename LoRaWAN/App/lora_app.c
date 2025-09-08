@@ -638,82 +638,88 @@ static void SendTxData(void)
 
   EnvSensors_Read(&sensor_data);
   uint16_t adc_0 = 0, adc_1 = 0, adc_2 = 0, adc_3 = 0;
+
+  sensor_data.temperature_mainboard_int = adc_0 = SYS_GetADC0();
+  sensor_data.voltage_out_int = adc_1 = SYS_GetADC1();
+  sensor_data.current_out_int = adc_2 = SYS_GetADC2();
+  sensor_data.voltage_in_int = adc_3 = SYS_GetADC3();
+
+  /* START OF Tohle smazat protože to není potřeba při posílání adc hodnot */
+  /*
+
   float volt_0 = 0, volt_1 = 0, volt_2 = 0, volt_3 = 0;
   float a = 0, b = 0,c = 0;
-  adc_0 = SYS_GetADC0();
-  adc_1 = SYS_GetADC1();
-  adc_2 = SYS_GetADC2();
-  adc_3 = SYS_GetADC3();
   if(adc_0 > 0 || adc_0 < 4096) {
-	  a = ((3,3 * (float) adc_0) / 4095);
-	  b = ((a * 7500000) / (3,3 - a));
-	  c = log10(b / 470000);
+	  a = ((3.3f * (float) adc_0) / 4095.0f);
+	  b = ((a * 7500000.0f) / (3.3f - a));
+	  c = log10(b / 470000.0f);
 	  //Rntc = ((7500000.0 * (float)adc_0) / (4095.0 - (float)adc_0));
 	  //volt_0 = (1 / (1/298,15 + ((1/4500) * (log(Rntc/470000))))) - 273,15;
-	  volt_0 = ( 1 / ((1/298,15) + (1/4500 * c))) + 25;
+	  volt_0 = ( 1 / ((1/298.15f) + (1/4500.0f * c)));
+	  volt_0 = volt_0 - 273.15f;
 	  //invT = (1.0f / T0) + (1.0f / B_K) * logf(Rntc / R25_ohm);
 	  //volt_0 = ((((3,3 * adc_0/4095) * (7500000/2700000)) + (3,3 * adc_0/4095)))
   }
   else
 	  volt_0 = 0;
 
-  volt_1 = ((((5 * (float)adc_1/4095)   * (7500000/2700000)) + (5 * (float)adc_1/4095)));
-  volt_2 = ((3,3 * (float)adc_2 ) / 4095);
-  volt_3 = ((((3,3 * (float)adc_3/4095) * (7500000/2700000)) + (3,3 * (float)adc_3/4095)));
+  volt_1 = ((((5.0f * (float)adc_1/4095.0f)   * (7500000.0f/2700000.0f)) + (5.0f * (float)adc_1/4095.0f)));
+  volt_2 = ((3.3f * (float)adc_2 ) / 4095.0f);
+  volt_3 = ((((3.3f * (float)adc_3/4095.0f) * (7500000.0f/2700000.0f)) + (3.3f * (float)adc_3/4095.0f)));
   APP_LOG(TS_ON, VLEVEL_M, "VDDA: %d\r\n", batteryLevel);
   APP_LOG(TS_ON, VLEVEL_M, "temp: %d\r\n", (int16_t)(sensor_data.temperature));
   APP_LOG(TS_ON, VLEVEL_M, "ADC0 - Temp : %.3f C\r\n", volt_0);
   APP_LOG(TS_ON, VLEVEL_M, "ADC1 - Out V: %.3f V\r\n", volt_1/10);
   APP_LOG(TS_ON, VLEVEL_M, "ADC2 - Out A: %.3f A\r\n", volt_2);
   APP_LOG(TS_ON, VLEVEL_M, "ADC3 - In V : %.3f V\r\n", volt_3);
-
-
-
+  */
+  /* END OF Tohle smazat protože to není potřeba při posílání adc hodnot */
   data_sht = sht40();
-  t_sht = (data_sht >> 16);
-  rh_sht = (data_sht & 0xFFFF);
-  //float s = ((float) t_sht / 100);
-  //float d = ((float) rh_sht / 100);
+  sensor_data.temperature_sht40_int = t_sht = (data_sht >> 16);
+  sensor_data.humidity_sht40_int = rh_sht = (data_sht & 0xFFFF);
+
+  sensor_data.battery_voltage = (uint16_t) SYS_GetBatteryLevel();
+
+  /*
   APP_LOG(TS_ON, VLEVEL_M, "TempSHT - In C : %d.%d C\r\n", t_sht/100, t_sht%100);
   APP_LOG(TS_ON, VLEVEL_M, "RH SHT  - In % : %d.%d %\r\n", rh_sht/100, rh_sht%100);
+   */
 
   AppData.Port = LORAWAN_USER_APP_PORT;
 
-  humidity    = (uint16_t)(sensor_data.humidity * 10);            /* in %*10     */
-  temperature = (int16_t)(sensor_data.temperature);
-  pressure = (uint16_t)(sensor_data.pressure * 100 / 10); /* in hPa / 10 */
+  //humidity    = (uint16_t)(sensor_data.humidity * 10);            /* in %*10     */
+  //temperature = (int16_t)(sensor_data.temperature);
+  //pressure = (uint16_t)(sensor_data.pressure * 100 / 10); /* in hPa / 10 */
 
+  // Number of RS485 final nodes, Now its just identification of LED.
   AppData.Buffer[i++] = AppLedStateOn;
-  AppData.Buffer[i++] = (uint8_t)((pressure >> 8) & 0xFF);
-  AppData.Buffer[i++] = (uint8_t)(pressure & 0xFF);
-  AppData.Buffer[i++] = (uint8_t)(temperature & 0xFF);
-  AppData.Buffer[i++] = (uint8_t)((humidity >> 8) & 0xFF);
-  AppData.Buffer[i++] = (uint8_t)(humidity & 0xFF);
 
-  if ((LmHandlerParams.ActiveRegion == LORAMAC_REGION_US915) || (LmHandlerParams.ActiveRegion == LORAMAC_REGION_AU915)
-      || (LmHandlerParams.ActiveRegion == LORAMAC_REGION_AS923))
-  {
-    AppData.Buffer[i++] = 0;
-    AppData.Buffer[i++] = 0;
-    AppData.Buffer[i++] = 0;
-    AppData.Buffer[i++] = 0;
-  }
-  else
-  {
-    latitude = sensor_data.latitude;
-    longitude = sensor_data.longitude;
+  // Temperature NTC thermistor on Main Board
+  AppData.Buffer[i++] = (uint8_t)((sensor_data.temperature_mainboard_int >> 8) & 0xFF);
+  AppData.Buffer[i++] = (uint8_t)(sensor_data.temperature_mainboard_int & 0xFF);
 
-    AppData.Buffer[i++] = GetBatteryLevel();        /* 1 (very low) to 254 (fully charged) */
-    //AppData.Buffer[i++] = sht40();        /* 1 (very low) to 254 (fully charged) */
-    AppData.Buffer[i++] = (uint8_t)((latitude >> 16) & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)((latitude >> 8) & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)(latitude & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)((longitude >> 16) & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)((longitude >> 8) & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)(longitude & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)((altitudeGps >> 8) & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)(altitudeGps & 0xFF);
-  }
+  // Temperature SHT40 on Main Board
+  AppData.Buffer[i++] = (uint8_t)((sensor_data.temperature_sht40_int >> 8) & 0xFF);
+  AppData.Buffer[i++] = (uint8_t)(sensor_data.temperature_sht40_int & 0xFF);
+  // Humidity SHT40 on Main Board
+  AppData.Buffer[i++] = (uint8_t)((sensor_data.humidity_sht40_int >> 8) & 0xFF);
+  AppData.Buffer[i++] = (uint8_t)(sensor_data.humidity_sht40_int & 0xFF);
+
+  // Input Voltage for MCU in mV
+  AppData.Buffer[i++] = (uint8_t)((sensor_data.battery_voltage >> 8) & 0xFF);
+  AppData.Buffer[i++] = (uint8_t)(sensor_data.battery_voltage & 0xFF);
+
+  // Input Voltage of Battery
+  AppData.Buffer[i++] = (uint8_t)((sensor_data.voltage_in_int >> 8) & 0xFF);
+  AppData.Buffer[i++] = (uint8_t)(sensor_data.voltage_in_int & 0xFF);
+
+  // Output Voltage of Battery
+  AppData.Buffer[i++] = (uint8_t)((sensor_data.voltage_out_int >> 8) & 0xFF);
+  AppData.Buffer[i++] = (uint8_t)(sensor_data.voltage_out_int & 0xFF);
+
+  // Input Voltage of Battery
+  AppData.Buffer[i++] = (uint8_t)((sensor_data.current_out_int >> 8) & 0xFF);
+  AppData.Buffer[i++] = (uint8_t)(sensor_data.current_out_int & 0xFF);
 
   AppData.BufferSize = i;
 
@@ -752,9 +758,14 @@ static void SendTxData(void)
 static void OnTxTimerEvent(void *context)
 {
   /* USER CODE BEGIN OnTxTimerEvent_1 */
+#warning "Bacha tady na prioritu";
+
+	UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_RS485), CFG_SEQ_Prio_0);
+	UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_SHT40), CFG_SEQ_Prio_1);
 
   /* USER CODE END OnTxTimerEvent_1 */
-  UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_LoRaSendOnTxTimerOrButtonEvent), CFG_SEQ_Prio_0);
+	UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_LoRaSendOnTxTimerOrButtonEvent), CFG_SEQ_Prio_2);
+
 
   /*Wait for next tx slot*/
   UTIL_TIMER_Start(&TxTimer);

@@ -6,7 +6,7 @@
 ../Core/Src/sys_app.c:132:6:SystemApp_Init	8	static
 ../Core/Src/sys_app.c:183:6:UTIL_SEQ_Idle	8	static
 ../Core/Src/sys_app.c:194:9:GetBatteryLevel	16	static
-../Core/Src/sys_app.c:226:9:GetTemperatureLevel	40	static
+../Core/Src/sys_app.c:226:9:GetTemperatureLevel	80	static
 ../Core/Src/sys_app.c:240:6:GetUniqueId	40	static
 ../Core/Src/sys_app.c:280:6:GetDevAddr	24	static
 ../Core/Src/sys_app.c:303:13:TimestampNow	32	static

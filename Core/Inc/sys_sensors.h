@@ -47,6 +47,20 @@ typedef struct
   /**more may be added*/
   /* USER CODE BEGIN sensor_t */
 
+  float temperature_mainboard_f;
+  float temperature_sht40_f;
+  float humidity_sht40_f;
+  float voltage_in_f;
+  float voltage_out_f;
+  float current_out_f;
+  int16_t temperature_mainboard_int;
+  int16_t temperature_sht40_int;
+  int16_t humidity_sht40_int;
+  int16_t voltage_in_int;
+  int16_t voltage_out_int;
+  int16_t current_out_int;
+  uint16_t battery_voltage;
+
   /* USER CODE END sensor_t */
 } sensor_t;
 

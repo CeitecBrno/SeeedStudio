@@ -43,10 +43,11 @@ extern "C" {
   * @brief Battery level in mV
   */
 #define BAT_CR2032                  ((uint32_t) 3000)
+#define BAT_MAX                  ((uint32_t) 3500)
 /**
   * @brief Maximum battery level in mV
   */
-#define VDD_BAT                     BAT_CR2032
+#define VDD_BAT                     BAT_MAX
 /**
   * @brief Minimum battery level in mV
   */
